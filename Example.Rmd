@@ -1,0 +1,155 @@
+---
+title: "Running examples"
+output: html_document
+---
+
+# Simulation studies
+
+```{r}
+# Source scripts files for data generation and methods implementation:
+source('simulations.R')
+source("roc_auc.R")
+source("methods.R")
+source("lasso.R")
+source("prior_lasso.R")
+
+```
+
+## Section 4.1
+
+```{r}
+# Specify scenario, generate simulation data (with a seed), and implement the method.
+# The list of method ran in our simulation studies:
+method_list <- c(
+  "supervised_lasso", "supervised_adaptive_lasso", 
+  "perfect_surrogate", "adaptive_semisupervised",
+  "prior_lasso_support", "prior_lasso_value")
+
+# supervised_lasso: supervised lasso
+# supervised_adaptive_lasso: supervised adaptive lasso
+# perfect_surrogate: SSprior
+# adaptive_semisupervised: PASS (our proposed method)
+# prior_lasso_support: pLASSO^1
+# prior_lasso_value: pLASSO^2
+
+# An example: run our proposed PASS method under scenario (I) with seeds 1:5 (i.e. 5 replications):
+method = 'adaptive_semisupervised'
+scenario = 1 
+seeds = 1:5
+
+# Labelled training size:
+nl <- 100
+# Unlabelled training size:
+nt <- 10000
+# Dimensionality of X:
+p <- 500
+
+results <- run_simulation(method = method, scenario = scenario, seeds = seeds, 
+                          nl = nl, nt = nt, p = p)
+
+# Evaluation metrics (with their length being the number of seeds):
+
+# AUC:
+results$auc
+
+# Excessive risk (ER):
+results$excess_risk
+
+# MSE-P:
+results$mse_response
+
+```
+
+
+## Section 4.2
+
+
+```{r}
+# The list of methods are the same as for Section 4.1. 
+# An example: run our proposed PASS method under scenario (i) with seeds 1:5 (i.e. 5 replications):
+
+method <- "supervised_lasso"
+scenario <- 1
+
+# Labelled training size:
+nl <- 100
+# Unlabelled training size:
+nt <- 10000
+# Dimensionality of X:
+p <- 500
+
+method <- "adaptive_semisupervised"
+results <- run_simulation_mis(method = method, scenario = scenario, seeds = seeds, 
+                              nl = nl, nt = nt, p = p)
+
+# AUC:
+results$auc
+
+# Excessive risk (ER):
+results$excess_risk
+
+# MSE-P:
+results$mse_response
+
+```
+
+
+
+## Real example using CAD data
+
+```{r}
+source('real_data_analysis.R')
+
+# load the dataset, which could be found from: https://celehs.github.io/PheCAP/articles/example2.html
+
+load('CAD_norm_pub.rda')
+
+# Candidate method:
+
+method_list <- c('U_lasso', 'U_lasso_SS',
+  "supervised_lasso", "supervised_adaptive_lasso", 
+  "perfect_surrogate", "adaptive_semisupervised",
+  "prior_lasso_support", "prior_lasso_value")
+
+# supervised_lasso: supervised lasso
+# supervised_adaptive_lasso: supervised adaptive lasso
+# perfect_surrogate: SSprior
+# adaptive_semisupervised: PASS (our proposed method)
+# prior_lasso_support: pLASSO^1
+# prior_lasso_value: pLASSO^2
+# U_lasso: the unsupervised lasso approach 
+# U_lasso_SS: the unsupervised lasso approach with a semi-superivsed modification
+
+
+# Size of labelled training samples:
+train_size <- 70
+method <- "adaptive_semisupervised"
+
+# Take implementing our method as an example:
+# x: the predictor matrix with the surrogate variable S as its first column
+# y: the label vector with the unobserved values set as NA.
+
+# num_replications: number of replications of data splitting.
+# num_bootstrap: number of bootstrap replication of the labelled training samples.
+
+x <- as.matrix(x)
+results <- train_and_evaluate(x, y, method = method, train_size = train_size,
+                              num_replications = 2, num_bootstrap = 5)
+
+# mean AUC:
+results[1]
+
+# Standard error of the mean AUC:
+results[2]
+
+# mean Brier Score (BS): 
+results[3]
+
+# Standard error of the mean BS: 
+results[4]
+
+# Brier Skill Score = 1 - BS / var(y)
+
+```
+
+
